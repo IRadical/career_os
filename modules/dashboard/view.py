@@ -1,69 +1,203 @@
 import customtkinter as ctk
 from app.theme import APP_THEME
 
+
 class DashboardView(ctk.CTkFrame):
     def __init__(self, master) -> None:
         super().__init__(master, fg_color=APP_THEME["bg_primary"], corner_radius=0)
-        
+
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         self._build()
 
     def _build(self) -> None:
-        header = ctk.CTkLabel(
+        title = ctk.CTkLabel(
             self,
             text="Dashboard",
             font=ctk.CTkFont(size=30, weight="bold"),
-            text_color=APP_THEME["text_primary"]
+            text_color=APP_THEME["text_primary"],
         )
-        header.grid(row=0, column=0, padx=28, pady=(24, 10), sticky="w")
+        title.grid(row=0, column=0, padx=28, pady=(24, 6), sticky="w")
 
-        body = ctk.CTkFrame(
+        subtitle = ctk.CTkLabel(
             self,
-            fg_color=APP_THEME["bg_secondary"],
-            corner_radius=18,
-            border_width=1,
-            border_color=APP_THEME["border"]
+            text="Centro de mando del Jinete",
+            text_color=APP_THEME["accent_cyan"],
+            font=ctk.CTkFont(size=14, weight="bold"),
         )
-        body.grid(row=1, column=0, padx=24, pady=24, sticky="nsew")
-        body.grid_columnconfigure((0,1), weight=1)
-        body.grid_rowconfigure((0,1), weight=1)
+        subtitle.grid(row=1, column=0, padx=28, pady=(0, 12), sticky="w")
+
+        top = ctk.CTkFrame(self, fg_color="transparent")
+        top.grid(row=2, column=0, padx=24, pady=(0, 12), sticky="nsew")
+        top.grid_columnconfigure((0, 1), weight=1)
+        top.grid_rowconfigure(0, weight=1)
+
+        rodeo_card = self._build_gran_rodeo_card(top)
+        rodeo_card.grid(row=0, column=0, padx=(0, 10), pady=0, sticky="nsew")
+
+        stats_card = self._build_stats_card(top)
+        stats_card.grid(row=0, column=1, padx=(10, 0), pady=0, sticky="nsew")
+
+        bottom = ctk.CTkFrame(self, fg_color="transparent")
+        bottom.grid(row=3, column=0, padx=24, pady=(0, 24), sticky="nsew")
+        bottom.grid_columnconfigure((0, 1), weight=1)
+        bottom.grid_rowconfigure((0, 1), weight=1)
 
         cards = [
-            ("Progeso anual", "Ruta principal: Python Automation / Backend Enginner"),
-            ("Faenas de hoy", "2 horas minimas de faena tecnica"),
-            ("Gran Rodeo", "Meta mayor del año en progreso"),
-            ("Estado de proyectos", "Telemetry / XCOM / Career OS"),
+            ("Faenas de hoy", "2/2 completadas", APP_THEME["success"]),
+            ("Proyecto activo", "Moto Telemetry Platform", APP_THEME["accent_cyan"]),
+            ("Siguiente frente", "Refactor de XCOM evaluator", APP_THEME["accent_copper"]),
+            ("Disciplina", "14 horas objetivo semanal", APP_THEME["text_secondary"]),
         ]
 
-        for i, (title, subtitle) in enumerate(cards):
+        for i, (title_text, body_text, accent) in enumerate(cards):
             row = i // 2
             col = i % 2
 
-            card = ctk.CTkFrame(
-                body,
-                fg_color=APP_THEME["bg_tertiary"],
-                corner_radius=16,
-                border_width=1,
-                border_color=APP_THEME["border"]
-            )
-            card.grid(row=row, column=col, padx=14, pady=14, sticky="nsew")
+            card = self._build_small_card(bottom, title_text, body_text, accent)
+            card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-            label = ctk.CTkLabel(
-                card,
-                text=title,
-                font=ctk.CTkFont(size=20, weight="bold"),
-                text_color=APP_THEME["text_primary"],   
-            )
-            label.pack(anchor="w", padx=18, pady=(18,8))
+    def _build_gran_rodeo_card(self, master) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(
+            master,
+            fg_color=APP_THEME["bg_secondary"],
+            corner_radius=20,
+            border_width=1,
+            border_color=APP_THEME["border"],
+        )
 
-            text = ctk.CTkLabel(
-                card,
-                text=subtitle,
+        title = ctk.CTkLabel(
+            card,
+            text="Gran Rodeo",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        )
+        title.pack(anchor="w", padx=20, pady=(20, 6))
+
+        desc = ctk.CTkLabel(
+            card,
+            text="Progreso hacia la meta mayor del año",
+            text_color=APP_THEME["text_secondary"],
+        )
+        desc.pack(anchor="w", padx=20, pady=(0, 16))
+
+        progress_value = 0.22
+
+        percent = ctk.CTkLabel(
+            card,
+            text=f"{int(progress_value * 100)}%",
+            font=ctk.CTkFont(size=36, weight="bold"),
+            text_color=APP_THEME["accent_cyan"],
+        )
+        percent.pack(anchor="w", padx=20, pady=(0, 6))
+
+        progress = ctk.CTkProgressBar(
+            card,
+            progress_color=APP_THEME["accent_cyan"],
+            fg_color=APP_THEME["bg_tertiary"],
+            height=18,
+            corner_radius=10,
+        )
+        progress.pack(fill="x", padx=20, pady=(0, 16))
+        progress.set(progress_value)
+
+        footer = ctk.CTkLabel(
+            card,
+            text="Semana actual: 3 de 52",
+            text_color=APP_THEME["text_muted"],
+        )
+        footer.pack(anchor="w", padx=20, pady=(0, 20))
+
+        return card
+
+    def _build_stats_card(self, master) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(
+            master,
+            fg_color=APP_THEME["bg_secondary"],
+            corner_radius=20,
+            border_width=1,
+            border_color=APP_THEME["border"],
+        )
+
+        title = ctk.CTkLabel(
+            card,
+            text="Estado del Jinete",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        )
+        title.pack(anchor="w", padx=20, pady=(20, 10))
+
+        rows = [
+            ("Ruta", "Python Automation / Backend"),
+            ("Streak", "5 días"),
+            ("Horas semana", "8 / 14"),
+            ("Proyecto líder", "Telemetry"),
+        ]
+
+        for left, right in rows:
+            row = ctk.CTkFrame(card, fg_color="transparent")
+            row.pack(fill="x", padx=20, pady=8)
+
+            left_label = ctk.CTkLabel(
+                row,
+                text=left,
+                width=130,
+                anchor="w",
+                font=ctk.CTkFont(size=15, weight="bold"),
+                text_color=APP_THEME["text_primary"],
+            )
+            left_label.pack(side="left")
+
+            right_label = ctk.CTkLabel(
+                row,
+                text=right,
+                anchor="w",
                 text_color=APP_THEME["text_secondary"],
-                wraplength =380,
-                justify="left",
             )
-            text.pack(anchor="w", padx=18, pady=(0,18))
+            right_label.pack(side="left")
 
+        return card
+
+    def _build_small_card(
+        self,
+        master,
+        title_text: str,
+        body_text: str,
+        accent: str,
+    ) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(
+            master,
+            fg_color=APP_THEME["bg_card"],
+            corner_radius=16,
+            border_width=1,
+            border_color=APP_THEME["border"],
+        )
+
+        badge = ctk.CTkFrame(
+            card,
+            width=46,
+            height=10,
+            corner_radius=999,
+            fg_color=accent,
+        )
+        badge.pack(anchor="w", padx=18, pady=(16, 10))
+
+        title = ctk.CTkLabel(
+            card,
+            text=title_text,
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        )
+        title.pack(anchor="w", padx=18, pady=(0, 6))
+
+        body = ctk.CTkLabel(
+            card,
+            text=body_text,
+            text_color=APP_THEME["text_secondary"],
+            wraplength=360,
+            justify="left",
+        )
+        body.pack(anchor="w", padx=18, pady=(0, 18))
+
+        return card
