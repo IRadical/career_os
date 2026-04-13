@@ -176,6 +176,25 @@ class RoadmapView(ctk.CTkFrame):
             )
             button.pack(fill="x", padx=20, pady=6)
 
+        divider_2 = ctk.CTkFrame(
+            self.detail_panel,
+            height=1,
+            fg_color=APP_THEME["border"],
+        )
+        divider_2.pack(fill="x", padx=20, pady=18)
+
+        reset_button = ctk.CTkButton(
+            self.detail_panel,
+            text="Restaurar roadmap inicial",
+            fg_color=APP_THEME["danger"],
+            hover_color=APP_THEME["accent_copper_hover"],
+            text_color=APP_THEME["text_primary"],
+            height=42,
+            corner_radius=12,
+            command=self._reset_roadmap,
+        )
+        reset_button.pack(fill="x", padx=20, pady=6)
+
     def _build_week_card(self, master, week: dict) -> ctk.CTkFrame:
         status = week["status"]
         status_text, status_color = self._get_status_style(status)
@@ -244,6 +263,13 @@ class RoadmapView(ctk.CTkFrame):
     def _change_status(self, new_status: str) -> None:
         RoadmapService.update_week_status(self.selected_week_number, new_status)
         self.weeks = RoadmapService.get_all_weeks()
+        self._render_week_cards()
+        self._render_selected_week_details()
+
+    def _reset_roadmap(self) -> None:
+        RoadmapService.reset_to_seed()
+        self.weeks = RoadmapService.get_all_weeks()
+        self.selected_week_number = 1
         self._render_week_cards()
         self._render_selected_week_details()
 
