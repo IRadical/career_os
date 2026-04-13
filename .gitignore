@@ -7,3 +7,8 @@ __pycache__/
 
 # Entorno
 .DS_Store
+
+#Local data and cache
+data/local_cache/
+*.json
+!app/theme.json
