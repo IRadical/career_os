@@ -1,10 +1,15 @@
 import customtkinter as ctk
+
 from app.theme import APP_THEME
+from core.services.roadmap_service import RoadmapService
 
 
 class DashboardView(ctk.CTkFrame):
     def __init__(self, master) -> None:
         super().__init__(master, fg_color=APP_THEME["bg_primary"], corner_radius=0)
+
+        self.metrics = RoadmapService.get_progress_metrics()
+        self.current_week = RoadmapService.get_current_week()
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -31,7 +36,6 @@ class DashboardView(ctk.CTkFrame):
         top = ctk.CTkFrame(self, fg_color="transparent")
         top.grid(row=2, column=0, padx=24, pady=(0, 12), sticky="nsew")
         top.grid_columnconfigure((0, 1), weight=1)
-        top.grid_rowconfigure(0, weight=1)
 
         rodeo_card = self._build_gran_rodeo_card(top)
         rodeo_card.grid(row=0, column=0, padx=(0, 10), pady=0, sticky="nsew")
@@ -45,20 +49,21 @@ class DashboardView(ctk.CTkFrame):
         bottom.grid_rowconfigure((0, 1), weight=1)
 
         cards = [
-            ("Faenas de hoy", "2/2 completadas", APP_THEME["success"]),
-            ("Proyecto activo", "Moto Telemetry Platform", APP_THEME["accent_cyan"]),
-            ("Siguiente frente", "Refactor de XCOM evaluator", APP_THEME["accent_copper"]),
-            ("Disciplina", "14 horas objetivo semanal", APP_THEME["text_secondary"]),
+            ("Faenas de hoy", "2 horas mínimas de faena técnica", APP_THEME["success"]),
+            ("Semana actual", f"Semana {self.current_week['week_number']}", APP_THEME["accent_cyan"]),
+            ("Objetivo actual", self.current_week["title"], APP_THEME["accent_copper"]),
+            ("Bloque actual", self.current_week["block"], APP_THEME["text_secondary"]),
         ]
 
         for i, (title_text, body_text, accent) in enumerate(cards):
             row = i // 2
             col = i % 2
-
             card = self._build_small_card(bottom, title_text, body_text, accent)
             card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
     def _build_gran_rodeo_card(self, master) -> ctk.CTkFrame:
+        completion_ratio = self.metrics["completion_ratio"]
+
         card = ctk.CTkFrame(
             master,
             fg_color=APP_THEME["bg_secondary"],
@@ -77,16 +82,14 @@ class DashboardView(ctk.CTkFrame):
 
         desc = ctk.CTkLabel(
             card,
-            text="Progreso hacia la meta mayor del año",
+            text="Progreso del plan anual",
             text_color=APP_THEME["text_secondary"],
         )
         desc.pack(anchor="w", padx=20, pady=(0, 16))
 
-        progress_value = 0.22
-
         percent = ctk.CTkLabel(
             card,
-            text=f"{int(progress_value * 100)}%",
+            text=f"{int(completion_ratio * 100)}%",
             font=ctk.CTkFont(size=36, weight="bold"),
             text_color=APP_THEME["accent_cyan"],
         )
@@ -100,11 +103,11 @@ class DashboardView(ctk.CTkFrame):
             corner_radius=10,
         )
         progress.pack(fill="x", padx=20, pady=(0, 16))
-        progress.set(progress_value)
+        progress.set(completion_ratio)
 
         footer = ctk.CTkLabel(
             card,
-            text="Semana actual: 3 de 52",
+            text=f"{self.metrics['completed_weeks']} de {self.metrics['total_weeks']} semanas completadas",
             text_color=APP_THEME["text_muted"],
         )
         footer.pack(anchor="w", padx=20, pady=(0, 20))
@@ -130,9 +133,9 @@ class DashboardView(ctk.CTkFrame):
 
         rows = [
             ("Ruta", "Python Automation / Backend"),
-            ("Streak", "5 días"),
-            ("Horas semana", "8 / 14"),
-            ("Proyecto líder", "Telemetry"),
+            ("Semana viva", str(self.current_week["week_number"])),
+            ("Horas semana", f"{self.current_week['actual_hours']} / {self.current_week['planned_hours']}"),
+            ("En progreso", str(self.metrics["in_progress_weeks"])),
         ]
 
         for left, right in rows:
