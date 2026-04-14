@@ -1,19 +1,51 @@
-# 🤠 Career OS | Vaquero Moderno
+🤠 Career OS | Vaquero Moderno
+Professional Mission-Control Dashboard for Systems Engineers
 
-A professional mission-control dashboard designed to centralize project management, systems engineering tools, and business operations. This application provides a unified interface to monitor and manage multiple independent modules.
+Career OS is a centralized command center designed to bridge the gap between technical infrastructure and business operations. Built with a Modular Object-Oriented approach, it provides a unified GUI to monitor telemetry, manage high-level roadmaps, and track business performance.
 
-## 🚀 Overview
+![Career OS Dashboard](./docs/v1.png)
 
-**Career OS** is built to bridge the gap between technical development and operational management. From system diagnostics to business workflow tracking, it provides a clean, modern, and efficient GUI.
+🚀 Key Modules
+Mapa de Ruta (Interactive Roadmap): A 52-week persistent tracker for professional development and certification goals.
 
-## 🛠️ Tech Stack
+Moto Telemetry (AWS Integration): (In Progress) Real-time data visualization for the Dinamo 400 SS via AWS IoT Core.
 
-- **Language:** Python 3.12
-- **Interface:** CustomTkinter (Modern GUI library)
-- **Architecture:** Modular Object-Oriented Design
+Sandwichan Ops: Business management module for artisanal food ventures.
 
-## 📂 Project Structure
+Aegisndr: (Planned) Security monitoring and network diagnostic toolset.
 
-- `app/`: Main application logic and UI components.
-- `core/`: Base configurations and shared utilities.
-- `modules/`: Independent business and engineering modules.
+🛠️ Tech Stack
+Language: Python 3.12+
+
+GUI Framework: CustomTkinter (Modern, High-DPI support)
+
+Data Persistence: JSON-based Local Storage (Service-oriented architecture ready for SQL migration)
+
+Architecture: MVC-inspired Modular Design with independent Service Layers.
+
+📂 Project Structure
+Plaintext
+career_os/
+├── app/            # Application lifecycle and Theme definitions
+├── core/           # Business logic, Services, and Data persistence
+├── data/           # Local cache and seed files (GitIgnored)
+└── modules/        # Domain-specific modules (Dashboard, Roadmap, Telemetry)
+⚙️ Installation & Setup
+Clone the repository:
+
+Bash
+git clone https://github.com/tu-usuario/career_os.git
+Setup virtual environment:
+
+Bash
+python -m venv .venv
+source .venv/Scripts/activate  # On Windows: .venv\Scripts\activate
+Install dependencies:
+
+Bash
+pip install -r requirements.txt
+Run the Command Center:
+
+Bash
+python -m app.main
+Developed by Gilberto Villar - Systems Engineer & Cybersecurity Specialist.
