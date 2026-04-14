@@ -8,6 +8,18 @@ class RoadmapService:
     _weeks: list[dict] | None = None
 
     @classmethod
+    def _normalize_week(cls, week: dict) -> dict:
+        normalized = dict(week)
+        normalized.setdefault("notes", "")
+        normalized.setdefault("planned_hours", 14)
+        normalized.setdefault("actual_hours", 0)
+        normalized.setdefault("status", "pending")
+        normalized.setdefault("goal", "")
+        normalized.setdefault("title", "")
+        normalized.setdefault("block", "General")
+        return normalized
+
+    @classmethod
     def _load_initial_data(cls) -> None:
         if cls._weeks is not None:
             return
@@ -15,9 +27,9 @@ class RoadmapService:
         cached_data = StorageService.load_json(StorageService.ROADMAP_FILE)
 
         if cached_data is not None:
-            cls._weeks = cached_data
+            cls._weeks = [cls._normalize_week(week) for week in cached_data]
         else:
-            cls._weeks = deepcopy(ROADMAP_WEEKS)
+            cls._weeks = [cls._normalize_week(week) for week in deepcopy(ROADMAP_WEEKS)]
             cls._save()
 
     @classmethod
@@ -28,7 +40,7 @@ class RoadmapService:
 
     @classmethod
     def reset_to_seed(cls) -> None:
-        cls._weeks = deepcopy(ROADMAP_WEEKS)
+        cls._weeks = [cls._normalize_week(week) for week in deepcopy(ROADMAP_WEEKS)]
         cls._save()
 
     @classmethod
@@ -93,6 +105,31 @@ class RoadmapService:
 
         if new_status == "pending":
             target["actual_hours"] = 0
+
+        cls._save()
+        return True
+
+    @classmethod
+    def update_week_details(
+        cls,
+        week_number: int,
+        title: str,
+        goal: str,
+        planned_hours: int,
+        actual_hours: int,
+        notes: str,
+    ) -> bool:
+        cls._load_initial_data()
+
+        target = cls.get_week_by_number(week_number)
+        if target is None:
+            return False
+
+        target["title"] = title.strip()
+        target["goal"] = goal.strip()
+        target["planned_hours"] = max(0, planned_hours)
+        target["actual_hours"] = max(0, actual_hours)
+        target["notes"] = notes.strip()
 
         cls._save()
         return True

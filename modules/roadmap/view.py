@@ -18,6 +18,12 @@ class RoadmapView(ctk.CTkFrame):
         self.scroll_frame = None
         self.detail_panel = None
 
+        self.title_entry = None
+        self.goal_textbox = None
+        self.planned_hours_entry = None
+        self.actual_hours_entry = None
+        self.notes_textbox = None
+
         self._build()
 
     def _build(self) -> None:
@@ -56,7 +62,7 @@ class RoadmapView(ctk.CTkFrame):
         self._render_week_cards()
 
     def _build_detail_panel(self) -> None:
-        self.detail_panel = ctk.CTkFrame(
+        self.detail_panel = ctk.CTkScrollableFrame(
             self,
             fg_color=APP_THEME["bg_secondary"],
             corner_radius=18,
@@ -110,48 +116,81 @@ class RoadmapView(ctk.CTkFrame):
         )
         badge.pack(anchor="w", padx=20, pady=(0, 14))
 
-        fields = [
-            ("Bloque", week["block"]),
-            ("Título", week["title"]),
-            ("Objetivo", week["goal"]),
-            ("Horas planeadas", str(week["planned_hours"])),
-            ("Horas reales", str(week["actual_hours"])),
-        ]
+        self._add_label("Bloque")
+        block_value = ctk.CTkLabel(
+            self.detail_panel,
+            text=week["block"],
+            text_color=APP_THEME["text_secondary"],
+        )
+        block_value.pack(fill="x", padx=20, pady=(0, 10))
 
-        for label_text, value_text in fields:
-            block = ctk.CTkFrame(self.detail_panel, fg_color="transparent")
-            block.pack(fill="x", padx=20, pady=8)
+        self._add_label("Título")
+        self.title_entry = ctk.CTkEntry(
+            self.detail_panel,
+            height=40,
+            corner_radius=12,
+        )
+        self.title_entry.pack(fill="x", padx=20, pady=(0, 10))
+        self.title_entry.insert(0, week["title"])
 
-            label = ctk.CTkLabel(
-                block,
-                text=label_text,
-                width=120,
-                anchor="w",
-                font=ctk.CTkFont(size=14, weight="bold"),
-                text_color=APP_THEME["text_primary"],
-            )
-            label.pack(side="left")
+        self._add_label("Objetivo")
+        self.goal_textbox = ctk.CTkTextbox(
+            self.detail_panel,
+            height=90,
+            corner_radius=12,
+        )
+        self.goal_textbox.pack(fill="x", padx=20, pady=(0, 10))
+        self.goal_textbox.insert("1.0", week["goal"])
 
-            value = ctk.CTkLabel(
-                block,
-                text=value_text,
-                anchor="w",
-                text_color=APP_THEME["text_secondary"],
-                wraplength=250,
-                justify="left",
-            )
-            value.pack(side="left", padx=8)
+        self._add_label("Horas planeadas")
+        self.planned_hours_entry = ctk.CTkEntry(
+            self.detail_panel,
+            height=40,
+            corner_radius=12,
+        )
+        self.planned_hours_entry.pack(fill="x", padx=20, pady=(0, 10))
+        self.planned_hours_entry.insert(0, str(week["planned_hours"]))
+
+        self._add_label("Horas reales")
+        self.actual_hours_entry = ctk.CTkEntry(
+            self.detail_panel,
+            height=40,
+            corner_radius=12,
+        )
+        self.actual_hours_entry.pack(fill="x", padx=20, pady=(0, 10))
+        self.actual_hours_entry.insert(0, str(week["actual_hours"]))
+
+        self._add_label("Notas")
+        self.notes_textbox = ctk.CTkTextbox(
+            self.detail_panel,
+            height=120,
+            corner_radius=12,
+        )
+        self.notes_textbox.pack(fill="x", padx=20, pady=(0, 14))
+        self.notes_textbox.insert("1.0", week.get("notes", ""))
+
+        save_button = ctk.CTkButton(
+            self.detail_panel,
+            text="Guardar cambios",
+            fg_color=APP_THEME["accent_cyan"],
+            hover_color=APP_THEME["accent_cyan_hover"],
+            text_color="#081018",
+            height=44,
+            corner_radius=12,
+            command=self._save_week_details,
+        )
+        save_button.pack(fill="x", padx=20, pady=(0, 16))
 
         divider = ctk.CTkFrame(
             self.detail_panel,
             height=1,
             fg_color=APP_THEME["border"],
         )
-        divider.pack(fill="x", padx=20, pady=18)
+        divider.pack(fill="x", padx=20, pady=12)
 
         actions_title = ctk.CTkLabel(
             self.detail_panel,
-            text="Acciones",
+            text="Estado",
             font=ctk.CTkFont(size=18, weight="bold"),
             text_color=APP_THEME["text_primary"],
         )
@@ -193,7 +232,16 @@ class RoadmapView(ctk.CTkFrame):
             corner_radius=12,
             command=self._reset_roadmap,
         )
-        reset_button.pack(fill="x", padx=20, pady=6)
+        reset_button.pack(fill="x", padx=20, pady=(0, 18))
+
+    def _add_label(self, text: str) -> None:
+        label = ctk.CTkLabel(
+            self.detail_panel,
+            text=text,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        )
+        label.pack(anchor="w", padx=20, pady=(4, 6))
 
     def _build_week_card(self, master, week: dict) -> ctk.CTkFrame:
         status = week["status"]
@@ -250,8 +298,29 @@ class RoadmapView(ctk.CTkFrame):
             text=f"Horas: {week['actual_hours']} / {week['planned_hours']}",
             text_color=APP_THEME["text_muted"],
         )
-        hours_label.pack(anchor="w", padx=14, pady=(0, 12))
+        hours_label.pack(anchor="w", padx=14, pady=(0, 4))
         hours_label.bind("<Button-1>", lambda _e, n=week["week_number"]: self._select_week(n))
+
+        notes_preview = (week.get("notes", "") or "").strip()
+        if notes_preview:
+            notes_preview = notes_preview[:60] + ("..." if len(notes_preview) > 60 else "")
+            notes_label = ctk.CTkLabel(
+                card,
+                text=notes_preview,
+                text_color=APP_THEME["accent_copper"],
+                wraplength=250,
+                justify="left",
+            )
+            notes_label.pack(anchor="w", padx=14, pady=(0, 12))
+            notes_label.bind("<Button-1>", lambda _e, n=week["week_number"]: self._select_week(n))
+        else:
+            spacer = ctk.CTkLabel(
+                card,
+                text="Sin notas",
+                text_color=APP_THEME["text_muted"],
+            )
+            spacer.pack(anchor="w", padx=14, pady=(0, 12))
+            spacer.bind("<Button-1>", lambda _e, n=week["week_number"]: self._select_week(n))
 
         return card
 
@@ -262,6 +331,38 @@ class RoadmapView(ctk.CTkFrame):
 
     def _change_status(self, new_status: str) -> None:
         RoadmapService.update_week_status(self.selected_week_number, new_status)
+        self.weeks = RoadmapService.get_all_weeks()
+        self._render_week_cards()
+        self._render_selected_week_details()
+
+    def _save_week_details(self) -> None:
+        week = RoadmapService.get_week_by_number(self.selected_week_number)
+        if week is None:
+            return
+
+        title = self.title_entry.get().strip()
+        goal = self.goal_textbox.get("1.0", "end").strip()
+        notes = self.notes_textbox.get("1.0", "end").strip()
+
+        try:
+            planned_hours = int(self.planned_hours_entry.get().strip())
+        except ValueError:
+            planned_hours = week["planned_hours"]
+
+        try:
+            actual_hours = int(self.actual_hours_entry.get().strip())
+        except ValueError:
+            actual_hours = week["actual_hours"]
+
+        RoadmapService.update_week_details(
+            week_number=self.selected_week_number,
+            title=title,
+            goal=goal,
+            planned_hours=planned_hours,
+            actual_hours=actual_hours,
+            notes=notes,
+        )
+
         self.weeks = RoadmapService.get_all_weeks()
         self._render_week_cards()
         self._render_selected_week_details()
