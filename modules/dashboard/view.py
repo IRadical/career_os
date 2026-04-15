@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from app.theme import APP_THEME
+from core.services.faena_service import FaenaService
 from core.services.roadmap_service import RoadmapService
 
 
@@ -10,9 +11,10 @@ class DashboardView(ctk.CTkFrame):
 
         self.metrics = RoadmapService.get_progress_metrics()
         self.current_week = RoadmapService.get_current_week()
+        self.faena_metrics = FaenaService.get_today_metrics()
+        self.today_faenas = FaenaService.get_today_faenas()
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
 
         self._build()
 
@@ -23,7 +25,7 @@ class DashboardView(ctk.CTkFrame):
             font=ctk.CTkFont(size=30, weight="bold"),
             text_color=APP_THEME["text_primary"],
         )
-        title.grid(row=0, column=0, padx=28, pady=(24, 6), sticky="w")
+        title.pack(anchor="w", padx=28, pady=(24, 6))
 
         subtitle = ctk.CTkLabel(
             self,
@@ -31,35 +33,59 @@ class DashboardView(ctk.CTkFrame):
             text_color=APP_THEME["accent_cyan"],
             font=ctk.CTkFont(size=14, weight="bold"),
         )
-        subtitle.grid(row=1, column=0, padx=28, pady=(0, 12), sticky="w")
+        subtitle.pack(anchor="w", padx=28, pady=(0, 14))
 
         top = ctk.CTkFrame(self, fg_color="transparent")
-        top.grid(row=2, column=0, padx=24, pady=(0, 12), sticky="nsew")
+        top.pack(fill="x", padx=24, pady=(0, 12))
         top.grid_columnconfigure((0, 1), weight=1)
 
-        rodeo_card = self._build_gran_rodeo_card(top)
-        rodeo_card.grid(row=0, column=0, padx=(0, 10), pady=0, sticky="nsew")
+        self._build_gran_rodeo_card(top).grid(row=0, column=0, padx=(0, 10), sticky="nsew")
+        self._build_today_card(top).grid(row=0, column=1, padx=(10, 0), sticky="nsew")
 
-        stats_card = self._build_stats_card(top)
-        stats_card.grid(row=0, column=1, padx=(10, 0), pady=0, sticky="nsew")
+        middle = ctk.CTkFrame(self, fg_color="transparent")
+        middle.pack(fill="x", padx=24, pady=(0, 12))
+        middle.grid_columnconfigure((0, 1), weight=1)
 
-        bottom = ctk.CTkFrame(self, fg_color="transparent")
-        bottom.grid(row=3, column=0, padx=24, pady=(0, 24), sticky="nsew")
-        bottom.grid_columnconfigure((0, 1), weight=1)
-        bottom.grid_rowconfigure((0, 1), weight=1)
+        self._build_current_week_card(middle).grid(row=0, column=0, padx=(0, 10), sticky="nsew")
+        self._build_week_notes_card(middle).grid(row=0, column=1, padx=(10, 0), sticky="nsew")
 
-        cards = [
-            ("Faenas de hoy", "2 horas mínimas de faena técnica", APP_THEME["success"]),
-            ("Semana actual", f"Semana {self.current_week['week_number']}", APP_THEME["accent_cyan"]),
-            ("Objetivo actual", self.current_week["title"], APP_THEME["accent_copper"]),
-            ("Bloque actual", self.current_week["block"], APP_THEME["text_secondary"]),
-        ]
+        bottom = ctk.CTkFrame(
+            self,
+            fg_color=APP_THEME["bg_secondary"],
+            corner_radius=18,
+            border_width=1,
+            border_color=APP_THEME["border"],
+        )
+        bottom.pack(fill="both", expand=True, padx=24, pady=(0, 24))
 
-        for i, (title_text, body_text, accent) in enumerate(cards):
-            row = i // 2
-            col = i % 2
-            card = self._build_small_card(bottom, title_text, body_text, accent)
-            card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+        header = ctk.CTkLabel(
+            bottom,
+            text="Faenas de hoy",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        )
+        header.pack(anchor="w", padx=20, pady=(18, 10))
+
+        if self.today_faenas:
+            for faena in self.today_faenas:
+                row = ctk.CTkFrame(bottom, fg_color=APP_THEME["bg_card"], corner_radius=12)
+                row.pack(fill="x", padx=18, pady=6)
+
+                status = "✔" if faena["completed"] else "•"
+                text = f"{status} {faena['title']}  |  {faena['category']}  |  {faena['hours']}h"
+                label = ctk.CTkLabel(
+                    row,
+                    text=text,
+                    text_color=APP_THEME["text_secondary"],
+                )
+                label.pack(anchor="w", padx=14, pady=12)
+        else:
+            empty = ctk.CTkLabel(
+                bottom,
+                text="No hay faenas registradas para hoy.",
+                text_color=APP_THEME["text_muted"],
+            )
+            empty.pack(anchor="w", padx=20, pady=(0, 18))
 
     def _build_gran_rodeo_card(self, master) -> ctk.CTkFrame:
         completion_ratio = self.metrics["completion_ratio"]
@@ -72,28 +98,25 @@ class DashboardView(ctk.CTkFrame):
             border_color=APP_THEME["border"],
         )
 
-        title = ctk.CTkLabel(
+        ctk.CTkLabel(
             card,
             text="Gran Rodeo",
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=APP_THEME["text_primary"],
-        )
-        title.pack(anchor="w", padx=20, pady=(20, 6))
+        ).pack(anchor="w", padx=20, pady=(20, 6))
 
-        desc = ctk.CTkLabel(
+        ctk.CTkLabel(
             card,
             text="Progreso del plan anual",
             text_color=APP_THEME["text_secondary"],
-        )
-        desc.pack(anchor="w", padx=20, pady=(0, 16))
+        ).pack(anchor="w", padx=20, pady=(0, 16))
 
-        percent = ctk.CTkLabel(
+        ctk.CTkLabel(
             card,
             text=f"{int(completion_ratio * 100)}%",
             font=ctk.CTkFont(size=36, weight="bold"),
             text_color=APP_THEME["accent_cyan"],
-        )
-        percent.pack(anchor="w", padx=20, pady=(0, 6))
+        ).pack(anchor="w", padx=20, pady=(0, 6))
 
         progress = ctk.CTkProgressBar(
             card,
@@ -105,16 +128,15 @@ class DashboardView(ctk.CTkFrame):
         progress.pack(fill="x", padx=20, pady=(0, 16))
         progress.set(completion_ratio)
 
-        footer = ctk.CTkLabel(
+        ctk.CTkLabel(
             card,
             text=f"{self.metrics['completed_weeks']} de {self.metrics['total_weeks']} semanas completadas",
             text_color=APP_THEME["text_muted"],
-        )
-        footer.pack(anchor="w", padx=20, pady=(0, 20))
+        ).pack(anchor="w", padx=20, pady=(0, 20))
 
         return card
 
-    def _build_stats_card(self, master) -> ctk.CTkFrame:
+    def _build_today_card(self, master) -> ctk.CTkFrame:
         card = ctk.CTkFrame(
             master,
             fg_color=APP_THEME["bg_secondary"],
@@ -123,84 +145,110 @@ class DashboardView(ctk.CTkFrame):
             border_color=APP_THEME["border"],
         )
 
-        title = ctk.CTkLabel(
+        ctk.CTkLabel(
             card,
-            text="Estado del Jinete",
+            text="Faena diaria",
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=APP_THEME["text_primary"],
-        )
-        title.pack(anchor="w", padx=20, pady=(20, 10))
+        ).pack(anchor="w", padx=20, pady=(20, 6))
 
         rows = [
-            ("Ruta", "Python Automation / Backend"),
-            ("Semana viva", str(self.current_week["week_number"])),
-            ("Horas semana", f"{self.current_week['actual_hours']} / {self.current_week['planned_hours']}"),
-            ("En progreso", str(self.metrics["in_progress_weeks"])),
+            ("Total", str(self.faena_metrics["total"])),
+            ("Completadas", str(self.faena_metrics["completed"])),
+            ("Horas hoy", str(self.faena_metrics["total_hours"])),
+            ("Horas hechas", str(self.faena_metrics["completed_hours"])),
         ]
 
         for left, right in rows:
             row = ctk.CTkFrame(card, fg_color="transparent")
             row.pack(fill="x", padx=20, pady=8)
 
-            left_label = ctk.CTkLabel(
+            ctk.CTkLabel(
                 row,
                 text=left,
                 width=130,
                 anchor="w",
                 font=ctk.CTkFont(size=15, weight="bold"),
                 text_color=APP_THEME["text_primary"],
-            )
-            left_label.pack(side="left")
+            ).pack(side="left")
 
-            right_label = ctk.CTkLabel(
+            ctk.CTkLabel(
                 row,
                 text=right,
-                anchor="w",
                 text_color=APP_THEME["text_secondary"],
-            )
-            right_label.pack(side="left")
+            ).pack(side="left")
 
         return card
 
-    def _build_small_card(
-        self,
-        master,
-        title_text: str,
-        body_text: str,
-        accent: str,
-    ) -> ctk.CTkFrame:
+    def _build_current_week_card(self, master) -> ctk.CTkFrame:
         card = ctk.CTkFrame(
             master,
-            fg_color=APP_THEME["bg_card"],
-            corner_radius=16,
+            fg_color=APP_THEME["bg_secondary"],
+            corner_radius=20,
             border_width=1,
             border_color=APP_THEME["border"],
         )
 
-        badge = ctk.CTkFrame(
+        ctk.CTkLabel(
             card,
-            width=46,
-            height=10,
-            corner_radius=999,
-            fg_color=accent,
-        )
-        badge.pack(anchor="w", padx=18, pady=(16, 10))
-
-        title = ctk.CTkLabel(
-            card,
-            text=title_text,
-            font=ctk.CTkFont(size=18, weight="bold"),
+            text=f"Semana {self.current_week['week_number']}",
+            font=ctk.CTkFont(size=24, weight="bold"),
             text_color=APP_THEME["text_primary"],
-        )
-        title.pack(anchor="w", padx=18, pady=(0, 6))
+        ).pack(anchor="w", padx=20, pady=(20, 8))
 
-        body = ctk.CTkLabel(
-            card,
-            text=body_text,
-            text_color=APP_THEME["text_secondary"],
-            wraplength=360,
-            justify="left",
+        lines = [
+            ("Bloque", self.current_week["block"]),
+            ("Título", self.current_week["title"]),
+            ("Horas", f"{self.current_week['actual_hours']} / {self.current_week['planned_hours']}"),
+        ]
+
+        for left, right in lines:
+            row = ctk.CTkFrame(card, fg_color="transparent")
+            row.pack(fill="x", padx=20, pady=8)
+
+            ctk.CTkLabel(
+                row,
+                text=left,
+                width=80,
+                anchor="w",
+                font=ctk.CTkFont(size=15, weight="bold"),
+                text_color=APP_THEME["text_primary"],
+            ).pack(side="left")
+
+            ctk.CTkLabel(
+                row,
+                text=right,
+                text_color=APP_THEME["text_secondary"],
+                wraplength=260,
+                justify="left",
+            ).pack(side="left")
+
+        return card
+
+    def _build_week_notes_card(self, master) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(
+            master,
+            fg_color=APP_THEME["bg_secondary"],
+            corner_radius=20,
+            border_width=1,
+            border_color=APP_THEME["border"],
         )
-        body.pack(anchor="w", padx=18, pady=(0, 18))
+
+        ctk.CTkLabel(
+            card,
+            text="Notas de la semana viva",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color=APP_THEME["text_primary"],
+        ).pack(anchor="w", padx=20, pady=(20, 8))
+
+        notes = self.current_week.get("notes", "").strip() or "Sin notas registradas todavía."
+
+        ctk.CTkLabel(
+            card,
+            text=notes,
+            text_color=APP_THEME["text_secondary"],
+            wraplength=320,
+            justify="left",
+        ).pack(anchor="w", padx=20, pady=(0, 20))
 
         return card

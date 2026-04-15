@@ -7,6 +7,7 @@ from modules.roadmap.view import RoadmapView
 from modules.telemetry.view import TelemetryView
 from modules.sandwichan.view import SandwichanView
 from modules.xcom_bridge.view import XcomBridgeView
+from modules.faenas.view import FaenasView
 
 
 class CareerOSApp(ctk.CTk):
@@ -73,6 +74,7 @@ class CareerOSApp(ctk.CTk):
             ("sandwichan", "Sandwichan"),
             ("xcom", "XCOM Bridge"),
             ("jinete", "Jinete"),
+            ("faenas", "Faenas"),
         ]
 
         for index, (key, label) in enumerate(nav_items, start=2):
@@ -112,6 +114,7 @@ class CareerOSApp(ctk.CTk):
             "sandwichan": SandwichanView,
             "xcom": XcomBridgeView,
             "jinete": JineteView,
+            "faenas": FaenasView,
         }
 
         view_class = views.get(route, DashboardView)
